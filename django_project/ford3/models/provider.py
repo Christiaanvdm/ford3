@@ -1,7 +1,11 @@
-from django.core.validators import RegexValidator
+from collections import Counter
+from operator import attrgetter
 from django.db import models, transaction
-from ford3.models.campus import Campus
+from django.db.models import signals, sql
+from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
+from ford3.models.campus import Campus
+
 
 
 class ActiveProviderManager(models.Manager):
@@ -220,3 +224,9 @@ class Provider(models.Model):
             raise ValidationError(
                 {'provider_name': 'That name is already taken.'})
         super().save(*args, **kwargs)
+
+    def soft_delete(self):
+        self.deleted = True
+        for campus in self.campus_set.all():
+            campus.soft_delete()
+        self.save()

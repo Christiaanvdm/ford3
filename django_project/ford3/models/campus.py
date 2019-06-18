@@ -1,6 +1,7 @@
 from django.contrib.gis.db import models
 from django.core.exceptions import ValidationError
 from ford3.models.campus_event import CampusEvent
+# from ford3.models.qualification import Qualification
 
 
 class ActiveCampusManager(models.Manager):
@@ -114,21 +115,21 @@ class Campus(models.Model):
     created_by = models.ForeignKey(
         'ford3.User',
         null=True,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='campus_created_by'
     )
 
     edited_by = models.ForeignKey(
         'ford3.User',
         null=True,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='campus_edited_by'
     )
 
     deleted_by = models.ForeignKey(
         'ford3.User',
         null=True,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='campus_deleted_by'
     )
 
@@ -151,6 +152,11 @@ class Campus(models.Model):
                 raise ValidationError({'campus': 'Name is already taken.'})
 
         super().save(*args, **kwargs)
+
+    def soft_delete(self):
+        self.soft_delete_all_qualifications()
+        self.deleted = True
+        self.save()
 
     @property
     def events(self):
@@ -274,6 +280,10 @@ class Campus(models.Model):
                 saqa_qualification__id=saqa_id,
                 campus=self)
             qualif.delete()
+
+    def soft_delete_all_qualifications(self):
+        for qualification in self.qualification_set.all():
+            qualification.soft_delete()
 
     def __str__(self):
         return self.name
