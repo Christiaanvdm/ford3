@@ -20,6 +20,7 @@ class TestCampusWithoutFixtures(TestCase):
         self.assertFalse(self.qualification1.deleted)
         self.qualification1.save()
         self.campus.soft_delete()
+        self.qualifcation1 = self.campus.qualification_set.first()
         self.assertTrue(self.campus.deleted)
         self.assertTrue(self.qualification1.deleted)
 
